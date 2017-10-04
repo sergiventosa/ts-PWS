@@ -29,7 +29,7 @@ Warming up
 ----------
  1. Read ./examples/example.sh
  2. Execute it, e.g., bash example.sh
- 3. Do ts-pws1e for the parameters usage.
+ 3. Do ts-pws for the parameters usage.
  
 Papers to be cited
 ------------------
