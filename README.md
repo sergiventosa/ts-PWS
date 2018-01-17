@@ -1,13 +1,13 @@
-Time-scale phase-weiged stack
-=============================
+Time-scale phase-weighted stack
+===============================
 
-Software to compute the time-scale phase-weiged stack (ts-PWS) using frames
+Software to compute the time-scale phase-weighted stack (ts-PWS) using frames
 of continuous wavelets, including the two-stage stack and the unbiased
 phase coherence strategies. Ventosa et al. (GJI, 2017)
 
 Main features
 -------------
- * Implement the ts-pws using the Morlet wavelet or the Mexican hat wavelets  
+ * Implement the ts-PWS using the Morlet wavelet or the Mexican hat wavelets  
    implemented using frames of wavelets for the time-frequency expansion.
  * Implement the two-stage stacking method and the unbiased phase coherence.
  * All parameters are automatically set when w0, Q or number of cycles is  
