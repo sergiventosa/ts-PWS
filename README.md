@@ -1,6 +1,8 @@
 Time-scale phase-weighted stack
 ===============================
 
+[![DOI](https://www.zenodo.org/badge/DOI/10.5281/zenodo.1154588.svg)](https://doi.org/10.5281/zenodo.1154588)
+
 Software to compute the time-scale phase-weighted stack (ts-PWS) using frames
 of continuous wavelets, including the two-stage stack and the unbiased
 phase coherence strategies. Ventosa et al. (GJI, 2017)
