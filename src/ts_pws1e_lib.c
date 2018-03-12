@@ -69,6 +69,7 @@ int tspws_main(t_tsPWS *tspws, t_tsPWS_out *out, t_data *in) {
 					fa1 += sig[max-1-n];
 					fa1 *= 0.5; 
 					sig[max-1-n] = fa1;
+					sig[n] = fa1;
 				}
 			} 
 		}
