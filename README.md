@@ -26,7 +26,8 @@ any previouly compiled code.
    sac is installed. For example, in bash this can be defined as:  
    export SACDIR=/opt/sac  
    Change "/opt/sac" to your current sac directory if necessary.
- * When available, OpenMP is used to speed up computations.
+ * OpenMP is used to speed up computations. When OpenMP is not available, 
+   use "make -f makefile_NoOpenMP".
 
 Warming up
 ----------
@@ -50,4 +51,4 @@ Schimmel M. & H. Paulssen, 1997. Noise reduction and detection of weak,
 coherent signals through phase weighted stacks, Geophysical Journal 
 International, 130, 497-505, doi: 10.1111/j.1365-246X.1997.tb05664.x
 
-2018/02/15 Sergi Ventosa Rahuet (sergiventosa(at)hotmail.com)
+2018/03/05 Sergi Ventosa Rahuet (sergiventosa(at)hotmail.com)
