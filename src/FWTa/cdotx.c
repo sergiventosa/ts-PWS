@@ -35,7 +35,7 @@ void cdotx_dd (double *y, double *x0, unsigned int N, double *w0, unsigned int L
 	}
 }
 
-void cdotx_dc (double complex *y0, double *x0, unsigned int N, complex *w0, unsigned int L, int c, int inc) {
+void cdotx_dc (double complex *y0, double *x0, unsigned int N, double complex *w0, unsigned int L, int c, int inc) {
 	double complex *w, *y, aux;
 	double *x;
 	unsigned int l, l0, n, n0;
