@@ -33,6 +33,18 @@
 /*            - Two-stage stacking.                                          */
 /*            - Unbiased phase coherence.                                    */
 /* Sep20 (1e) Documentation.                                                 */
+/* **** 2018 ****                                                            */
+/* Jan17 (1e) Verbose now shows the output file names for the linear stack   */
+/*            and the ts-PWS.                                                */ 
+/* Feb15 (1e) Provide more information errors & warnings.                    */
+/*            Undefined event and station locations does not stop execution. */
+/*            The fold parameter is ignored on non-symmetric sequences.      */
+/* Mar09 (1e) Bug corrections:                                               */
+/*            - Corrected the errors and warnings produced when using the    */
+/*            default compiler in MAC.                                       */
+/*            - The fold parameter is now ignored on non-symmetric sequences.*/
+/*            - Odd-length sequences are now well folded (the zero-lag       */
+/*            sample was halved).                                            */
 /*****************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,7 +60,7 @@
 void infooo();
 void usage();
 
-int ReadData (float **sigall, time_t **time, t_hdr *hdr, char *filein, int bin);
+int ReadData (float **sigall, time_t **time, t_hdr *hdr, char *filein, int bin, int verbose);
 int wrsac(char *filename, float *y, t_hdr *hdr, char *kstnm, float user0);
 
 void DestroyFilelist(char *p[]);
@@ -60,9 +72,19 @@ int isdouble (const char *str);
 int RDuint   (unsigned int* const x, const char *str);
 int RDdouble (double* const x, const char *str);
 
-int nerr_print (char *filename, int nerr) {
-	printf ("\a tspws_main: Error reading %s header (nerr=%d)\n", filename, nerr); 
+int error_header (char *filename, int nerr) {
+	printf ("\a tspws_main: Error reading %s header (nerr=%d).\n", filename, nerr); 
 	return 2;
+}
+
+int error_missing_info (char *filename, char *nick, int nerr) {
+	printf ("\a tspws_main: Error reading %s header (nerr=%d), %s is not defined!\n", filename, nerr, nick); 
+	return 2;
+}
+
+void warning_missing_info (char *filename, char *nick, int verbose) {
+	if (verbose)
+		printf ("\a tspws_main: %s is not defined in %s.\n", filename, nick); 
 }
 
 void strcat3 (char *sout, const char *s1, const char *s2, const char *s3);
@@ -73,7 +95,7 @@ void strcat3 (char *sout, const char *s1, const char *s2, const char *s3);
 int main(int argc, char *argv[]) {
 	t_tsPWS tspws = {-1, 0, 0, 4, 2., 1.0, PI*sqrt(2/log(2)), 2., 0., 0., 2., 
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL};  /* Default parameters. */
-	t_tsPWS_out out = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0};
+	t_tsPWS_out out;
 	t_data in;
 	int i, er;
 	char *filename=NULL;
@@ -144,13 +166,15 @@ int main(int argc, char *argv[]) {
 	/* Initializations. */
 	/********************/
 	/* Read data and header */
-	er = ReadData (&in.sigall, &in.time, &in.hdr, tspws.filein, tspws.bin);
+	memset(&in, 0, sizeof(in));
+	er = ReadData (&in.sigall, &in.time, &in.hdr, tspws.filein, tspws.bin, tspws.verbose);
 	if (tspws.convergence && tspws.fileconv) {
 		if (NULL == (in.reference = (float *)mycalloc(in.hdr.max, sizeof(float)) )) er = 4;
 	} else in.reference = NULL;
 	if (er) return er;
 	
 	/* Allocate memory */
+	memset(&out, 0, sizeof(out));
 	out.N   = in.hdr.max;
 	out.mtr = (tspws.Nmax) ? tspws.Nmax : in.hdr.mtr;
 	if (NULL == (out.ls    = (float *)mycalloc(in.hdr.max, sizeof(float)) )) er = 4;
@@ -221,11 +245,14 @@ int main(int argc, char *argv[]) {
 		memcpy(&hdr, &in.hdr, sizeof(t_hdr));
 		
 		/* Write sac files */
+		n = 0;
 		if (tspws.fold) {
-			n = hdr.max/2;            /* First sample to be saved. */
-			hdr.max = (hdr.max+1)/2;  /* Number of samples   "   . */
-			hdr.beg += hdr.dt*n;      /* Update beg time.          */
-		} else n = 0;
+			if (2*hdr.beg + (hdr.max-1)*hdr.dt < 0.5*hdr.dt) {
+				n = hdr.max/2;            /* First sample to be saved. */
+				hdr.max = (hdr.max+1)/2;  /* Number of samples   "   . */
+				hdr.beg += hdr.dt*n;      /* Update beg time.          */
+			} else printf("Warning: Folding ignored. B = %f, E = %f\n", hdr.beg, hdr.beg + (hdr.max-1)*hdr.dt);
+		}
 		
 		ua1 = 25;
 		if (tspws.fileout) ua1 += strlen(tspws.fileout);
@@ -234,6 +261,11 @@ int main(int argc, char *argv[]) {
 		/* Linear stack */
 		if (tspws.fileout) strcat3 (filename, "tl_", tspws.fileout, ".sac");
 		else strcpy(filename, "tl.sac");
+		
+		if (tspws.verbose) {
+			printf("  Output files:\n");
+			printf("     Linear stack: %s\n", filename);
+		}
 		
 		sig = out.ls + n;
 		if (tspws.lkstnm)
@@ -248,6 +280,9 @@ int main(int argc, char *argv[]) {
 		if (tspws.lkstnm)
 			wrsac(filename, sig, &hdr, tspws.kstnm, (float)out.mtr);
 		else wrsac(filename, sig, &hdr, "ts_pws", (float)out.mtr);
+		
+		if (tspws.verbose) 
+			printf("     ts-PWS:       %s\n", filename);
 		
 		/* Convergence binary files. */
 		if (tspws.convergence) {
@@ -300,7 +335,7 @@ int main(int argc, char *argv[]) {
 	myfree(in.time);
 	myfree(in.reference);
 	
-	return er;
+	return 0;
 }
 
 void infooo() {
@@ -311,7 +346,7 @@ void infooo() {
 	puts("Ventosa et al., 2008. S-transform from a wavelets point of view, IEEE Transactions on Signal Processing, 56, 2771-2780, doi:10.1109/TSP.2008.917029");
 	puts("Ventosa, S., Schimmel, M., & Stutzmann, E., 2017. Extracting surface waves, hum and normal modes: Time-scale phase-weighted stack and beyond, Geophysical Journal International, 211, 30-44, doi:10.1093/gji/ggx284"); 
 	puts("AUTHOR: Sergi Ventosa Rahuet (sergiventosa(at)hotmail.com)");
-	puts("Last modification: 20/09/2017\n");
+	puts("Last modification: 09/03/2018\n");
 }
 
 void usage() {
@@ -368,18 +403,18 @@ void usage() {
 	puts("     Linear stack: tl.sac");
 	puts("     ts-PWS:       ts_pws.sac"); 
 	puts("");
-	puts("AUTHOR: Sergi Ventosa, 20/09/2017");
+	puts("AUTHOR: Sergi Ventosa, 17/01/2018");
 	puts("");
 	puts("EXAMPLES");
 	puts("  1) Minimal: Stack of the traces listed in filelist.txt using the time-scale PWS method");
 	puts("              using the defaults defined above.");
-	puts("       ts_pws filelist.txt");
+	puts("       ts_pws1e filelist.txt");
 	puts("  2) Same as 1 but reducing the frequency range to 3 octaves starting at 4 mHz and");
 	puts("     applying folding (summing positive and negative lag times).");
-	puts("       ts_pws filelist.txt osac=\"example2\" wu=2 rm fold fmin=0.004 J=3 verbose");
+	puts("       ts_pws1e filelist.txt osac=\"example2\" wu=2 rm fold fmin=0.004 J=3 verbose");
 	puts("  3) Same as 2 but providing the traces in a single binary file and using the two-stage");
 	puts("     stacking method. sac2bin, stores the sac traces into a single binary file \"data.bin\".");
-	puts("       ts_pws data.bin osac=\"twostage\" wu=2 rm bin fold TwoStage=10 unbiased fmin=0.004 J=3 verbose");
+	puts("       ts_pws1e data.bin osac=\"twostage\" wu=2 rm bin fold TwoStage=10 unbiased fmin=0.004 J=3 verbose");
 	puts("  Examples 2 & 3 reproduce the traces shown in Fig. 5c of Ventosa et al (GJI 2017).");
 	puts(""); 
 	puts("Please, do not hesitate to send bugs, comments or improvements to sergiventosa(at)hotmail.com\n");
@@ -388,7 +423,7 @@ void usage() {
 /*****************************************************/
 /* Functions to read the data and write the results. */ 
 /*****************************************************/
-int ReadData (float **sigall, time_t **time, t_hdr *hdr, char *filein, int bin) {
+int ReadData (float **sigall, time_t **time, t_hdr *hdr, char *filein, int bin, int verbose) {
 	float *sig, beg, dt, beg1, dt1;
 	unsigned int nsmp, nsamp, itr, mtr, nskip;
 	int nerr=0, max, ia1;
@@ -424,15 +459,15 @@ int ReadData (float **sigall, time_t **time, t_hdr *hdr, char *filein, int bin) 
 		if (hdr->mtr > 0) {
 			/* Read the header of the first file. */
 			filename = filenames[0];
-			rsach (filename, &nerr, strlen(filename));       if (nerr) return nerr_print (filename, nerr);
+			rsach (filename, &nerr, strlen(filename));            if (nerr) error_header (filename, nerr);
 			sac_warning_off ();  /* Avoids lots of warnings when fields like stdp & knetwk are undefined. */
-			getnhv ("npts",  &hdr->max,  &nerr, strlen("npts"));  if (nerr) return nerr_print (filename, nerr);
-			getfhv ("stla",  &hdr->stla, &nerr, strlen("stla"));  if (nerr) return nerr_print (filename, nerr);
-			getfhv ("stlo",  &hdr->stlo, &nerr, strlen("stlo"));  if (nerr) return nerr_print (filename, nerr);
-			getfhv ("evla",  &hdr->evla, &nerr, strlen("evla"));  if (nerr) return nerr_print (filename, nerr);
-			getfhv ("evlo",  &hdr->evlo, &nerr, strlen("evlo"));  if (nerr) return nerr_print (filename, nerr);
-			getfhv ("delta", &hdr->dt,   &nerr, strlen("delta")); if (nerr) return nerr_print (filename, nerr);
-			getfhv ("b",     &hdr->beg,  &nerr, strlen("b"));     if (nerr) return nerr_print (filename, nerr);
+			getnhv ("npts",  &hdr->max,  &nerr, strlen("npts"));  if (nerr) return error_missing_info (filename, "npts", nerr); 
+			getfhv ("stla",  &hdr->stla, &nerr, strlen("stla"));  if (nerr) warning_missing_info (filename, "stla", verbose);
+			getfhv ("stlo",  &hdr->stlo, &nerr, strlen("stlo"));  if (nerr) warning_missing_info (filename, "stlo", verbose);
+			getfhv ("evla",  &hdr->evla, &nerr, strlen("evla"));  if (nerr) warning_missing_info (filename, "evla", verbose);
+			getfhv ("evlo",  &hdr->evlo, &nerr, strlen("evlo"));  if (nerr) warning_missing_info (filename, "evlo", verbose);
+			getfhv ("delta", &hdr->dt,   &nerr, strlen("delta")); if (nerr) return error_missing_info (filename, "delta", nerr); 
+			getfhv ("b",     &hdr->beg,  &nerr, strlen("b"));     if (nerr) return error_missing_info (filename, "b", nerr);
 		} else {
 			printf("tspws_main: nothing to do, %s is empty!\n", filein);
 			return 0;
@@ -484,13 +519,13 @@ int ReadData (float **sigall, time_t **time, t_hdr *hdr, char *filein, int bin) 
 				printf("tspws_main: WARNING: use only %u samples on %u trace\n", nsmp, itr);
 			else if (nsamp < nsmp)
 				printf("tspws_main: WARNING: trace %u has only %u samples\n", itr, nsamp);
-			if (abs(dt-dt1) > dt1*0.01) {
+			if (fabs(dt-dt1) > dt1*0.01) {
 				printf("tspws_main: WARNING: trace %u has a different dt !\n", itr);
 				printf("tspws_main: WARNING: skipping trace %u\n", itr);
 				nskip += 1;
 				continue;
 			}
-			if (abs(beg1-beg) > dt1) {
+			if (fabs(beg1-beg) > dt1) {
 				printf("tspws_main: WARNING: trace %u has a different beg !\n", itr);
 				printf("tspws_main: WARNING: skipping trace %u\n", itr);
 				nskip += 1;

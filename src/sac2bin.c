@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <time.h>
 #include <sacio.h>
 #include "sac2bin.h"
@@ -29,6 +30,15 @@ int nerr_print (char *filename, int nerr) {
 	return 2;
 }
 
+void warning_missing_info (char *filename, char *nick) {
+	printf ("\a sac2bin_main: %s is not defined in %s.\n", filename, nick); 
+}
+
+void warning_diff (char *filename, char *nick) {
+	printf ("\a sac2bin_main: %s is not defined in %s or different than the one defined in the first sequence.\n", filename, nick); 
+}
+
+
 int sac2bin_main (char *outfile, char *infiles) {
 	t_ccheader *hdr;
 	float *data=NULL, *trace=NULL;
@@ -43,7 +53,10 @@ int sac2bin_main (char *outfile, char *infiles) {
 	time_t *time=NULL;
 	struct tm tm;
 	
-	if (outfile == NULL || infiles == NULL) {printf("\a sac2bin_main: NULL inputs\n"); return -1;}	
+	if (outfile == NULL || infiles == NULL) { 
+		printf("\a sac2bin_main: NULL inputs\n"); 
+		return -1; 
+	}
 	if (NULL == (fid = fopen(infiles, "r"))) {
 		printf("\a sac2bin_main: cannot open %s file\n", infiles);
 		return -2;
@@ -64,10 +77,10 @@ int sac2bin_main (char *outfile, char *infiles) {
 	rsach (filename, &nerr, strlen(filename));       if (nerr) return nerr_print (filename, nerr);
 	sac_warning_off ();  /* Avoids lots of warnings when fields like stdp & knetwk are undefined. */
 	getkhv ("kstnm",  hdr->method, &nerr, strlen("kstnm"), 8); if (nerr) strcpy(hdr->method, "");
-	getfhv ("evla",  &hdr->stlat1, &nerr, strlen("evla"));  if (nerr) return nerr_print (filename, nerr);
-	getfhv ("evlo",  &hdr->stlon1, &nerr, strlen("evlo"));  if (nerr) return nerr_print (filename, nerr);
-	getfhv ("stla",  &hdr->stlat2, &nerr, strlen("stla"));  if (nerr) return nerr_print (filename, nerr);
-	getfhv ("stlo",  &hdr->stlon2, &nerr, strlen("stlo"));  if (nerr) return nerr_print (filename, nerr);
+	getfhv ("evla",  &hdr->stlat1, &nerr, strlen("evla"));  if (nerr) warning_missing_info (filename, "evla");
+	getfhv ("evlo",  &hdr->stlon1, &nerr, strlen("evlo"));  if (nerr) warning_missing_info (filename, "evlo");
+	getfhv ("stla",  &hdr->stlat2, &nerr, strlen("stla"));  if (nerr) warning_missing_info (filename, "stla");
+	getfhv ("stlo",  &hdr->stlon2, &nerr, strlen("stlo"));  if (nerr) warning_missing_info (filename, "stlo");
 	getfhv ("delta", &DT,          &nerr, strlen("delta")); if (nerr) return nerr_print (filename, nerr);
 	getnhv ("npts",  &ia1,         &nerr, strlen("npts"));  if (nerr) return nerr_print (filename, nerr);
 	getfhv ("b",     &hdr->lag1,   &nerr, strlen("b"));     if (nerr) return nerr_print (filename, nerr);
@@ -107,10 +120,14 @@ int sac2bin_main (char *outfile, char *infiles) {
 		getnhv ("nzmin",  &min,    &nerr, strlen("nzmin"));  if (nerr) skiptime = 1;
 		getnhv ("nzsec",  &sec,    &nerr, strlen("nzsec"));  if (nerr) skiptime = 1;
 		getnhv ("nzmsec", &msec,   &nerr, strlen("nzmsec")); if (nerr) skiptime = 1;
-		getfhv ("evla",   &stlat1, &nerr, strlen("evla"));   if (nerr) return nerr_print (filename, nerr);
-		getfhv ("evlo",   &stlon1, &nerr, strlen("evlo"));   if (nerr) return nerr_print (filename, nerr);
-		getfhv ("stla",   &stlat2, &nerr, strlen("stla"));   if (nerr) return nerr_print (filename, nerr);
-		getfhv ("stlo",   &stlon2, &nerr, strlen("stlo"));   if (nerr) return nerr_print (filename, nerr);
+		getfhv ("evla",   &stlat1, &nerr, strlen("evla"));
+		if (nerr || stlat1 != hdr->stlat1) warning_diff (filename, "evla");
+		getfhv ("evlo",   &stlon1, &nerr, strlen("evlo"));
+		if (nerr || stlon1 != hdr->stlon1) warning_diff (filename, "evlo");
+		getfhv ("stla",   &stlat2, &nerr, strlen("stla"));
+		if (nerr || stlat2 != hdr->stlat2) warning_diff (filename, "stla");
+		getfhv ("stlo",   &stlon2, &nerr, strlen("stlo"));
+		if (nerr || stlon2 != hdr->stlon2) warning_diff (filename, "stlo");
 		
 		if (!skiptime) {
 			tm.tm_year = year-1900;
@@ -127,15 +144,15 @@ int sac2bin_main (char *outfile, char *infiles) {
 		else if (NLAGS > nlags)
 			printf("\a sac2bin_main: WARNING: trace %u has only %u samples\n", itr, nlags);
 		
-		if (abs(dt-DT) > DT*0.01) {
+		if (fabs(dt-DT) > DT*0.01) {
 			printf("\a sac2bin_main: WARNING: trace %u has a different lag rate !\n", itr);
 			nerr = 1;
 		}
-		if (abs(LAG1-lag1) > DT) {
+		if (fabs(LAG1-lag1) > DT) {
 			printf("\a sac2bin_main: WARNING: trace %u has a different lag1 !\n", itr);
 			nerr = 1;
 		}
-		if (abs(LAG2-lag2) > DT) {
+		if (fabs(LAG2-lag2) > DT) {
 			printf("\a sac2bin_main: WARNING: trace %u has a different lag2 !\n", itr);
 			nerr = 1;
 		}
@@ -167,10 +184,7 @@ int sac2bin_main (char *outfile, char *infiles) {
 }
 
 void usage () {
-	puts("\nUSAGE: sac2bin InputFile OutputFile ");
-	puts("  InputFile: One file name (SAC) per line, traces must have same begin (b),");
-	puts("             number of samples (nsmpl) and sampling interval (dt).");
-	puts("  OutputFile: Collecting all sac files into a single binary file.");
+	puts("\nUSAGE: sac2bin \"List of sac files\" \"Output file name\"");
 }
 
 char *set_utc () {

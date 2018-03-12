@@ -11,6 +11,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <time.h>
 
 #include "wavelet_v7.h"
 #include "myallocs.h"
@@ -56,16 +57,20 @@ int tspws_main(t_tsPWS *tspws, t_tsPWS_out *out, t_data *in) {
 	
 	/* Folding */
 	if (tspws->fold) { /* Sequences are not halved to avoid the jump between 0 and -beg in the WT. */
-		if (2*beg - max*dt > 0.5*dt) printf("Lags from %f to %f\n", beg, beg + (max-1)*dt);
-		nsmp = nsamp/2;  /* Interger (floor) division. */
-		
-		#pragma omp parallel for default(shared) private(sig, n) schedule(static)
-		for (itr=0; itr<mtr; itr++) {
-			sig = sigall + itr*max;
-			for (n=0; n<nsmp; n++) { 
-				sig[n] += sig[max-1-n]; 
-				sig[max-1-n] = sig[n];
-			}
+		if (2*beg + (max-1)*dt > 0.5*dt) {
+			printf("Warning: Folding ignored. B = %f, E = %f, nsamp = %u\n", beg, beg + (max-1)*dt, nsamp);
+			tspws->fold = 0;
+		} else {
+			nsmp = nsamp/2;  /* Interger (floor) division. */
+			for (itr=0; itr<mtr; itr++) {
+				sig = sigall + itr*max;
+				for (n=0; n<nsmp; n++) {
+					fa1  = sig[n];  
+					fa1 += sig[max-1-n];
+					fa1 *= 0.5; 
+					sig[max-1-n] = fa1;
+				}
+			} 
 		}
 	}
 	
@@ -94,8 +99,8 @@ int tspws_main(t_tsPWS *tspws, t_tsPWS_out *out, t_data *in) {
 		da1 = tspws->w0/(2*PI * dt*tspws->fmin);  /* Fmin sets the largest scale.       */
 		if (tspws->J) {                           /* J is defined:                      */
 			da1 /= pow(2, tspws->J - 1/(double)tspws->V); /*   da1 is the now the lowest scale. */
-			while (da1 < tspws->s0) {             /*   Check that it's not too low.     */
-				da1 /= 2; 
+			while (da1 < tspws->s0 * 0.9) {             /*   Check that it's not too low.     */
+				da1 *= 2;
 				tspws->J--;
 			}
 			tspws->s0 = da1;

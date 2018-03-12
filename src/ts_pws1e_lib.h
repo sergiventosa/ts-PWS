@@ -10,6 +10,7 @@
 #define TSPWS_LIB
 
 #include <stdio.h>
+#include <time.h>
 
 #ifndef PI
 #define	PI 3.14159265358979328

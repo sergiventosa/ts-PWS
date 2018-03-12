@@ -1,8 +1,8 @@
 CC=gcc
 DEBUG=-g -DDEBUG -pg
 OPT = -O3 -march=native
-CFLAGS=-c -Wall $(OPT) -ITools -IFWTa -I$(SACDIR)/include -DNoThreads -fopenmp
-LFLAGS=-Wall $(OPT) -fopenmp
+CFLAGS=-c -Wall $(OPT) -ITools -IFWTa -I$(SACDIR)/include -DNoThreads
+LFLAGS=-Wall $(OPT)
 CLIBS=-lm
 
 libsac = $(SACDIR)/lib/sacio.a
@@ -22,7 +22,7 @@ ts_pws1e.o: ts_pws1e.c ts_pws1e_lib.h
 	
 sac2bin: sac2bin.o
 	$(CC) $(LFLAGS) -o sac2bin sac2bin.o $(libsac) $(CLIBS)
-	
+
 install: ts_pws sac2bin
 	mkdir -p ../bin
 	install -s ts_pws sac2bin ../bin
