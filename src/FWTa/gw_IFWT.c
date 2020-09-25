@@ -129,7 +129,7 @@ int pth_Ncomplex_1D_wavelet_rec(double complex *xrec, t_CWTvar *wdec, int L, int
 #else
 	for (th=0; th<NTH; th++) {
 		if (pthread_create(&thread_id[th], NULL, (void *)thf_Ncomplex_1D_wavelet_rec, &data[th]) )
-            mexWarnMsgTxt("Create thread error");
+			mexWarnMsgTxt("Create thread error");
 	}
 	for (th=0; th<NTH; th++) pthread_join(thread_id[th], NULL);
 #endif
@@ -147,7 +147,8 @@ void mexFunction(int nlhs, mxArray *plhs[],
 	t_WaveletDef WTdef;
 	t_WaveletFamily *pWF;
 	double  *pd1, *pd2;
-	int ndim, dims[2], cell_dims[2], m, L, M;
+	int ndim, cell_dims[2], m, L, M;
+	mwSize dims[2];
 	unsigned int s, i, ReOut;
 	mxComplexity mxC;
 	mxArray *pm;
@@ -180,12 +181,12 @@ void mexFunction(int nlhs, mxArray *plhs[],
 	GetPositiveDoubleField (&WTdef.b0,  prhs[1], "b0");
 	GetPositiveDoubleField (&WTdef.op1, prhs[1], "op1");
 
-    if (nrhs >= 3) L = (int)mxGetScalar(prhs[2]);
-    else {
-        pd1 = mxGetPr(mxGetField(prhs[0], 0, "N"));
-        L = (int)((int)*pd1 / WTdef.b0);
-        if (WTdef.b0 >= 1) L = (int)*pd1;
-    }
+	if (nrhs >= 3) L = (int)mxGetScalar(prhs[2]);
+	else {
+		pd1 = mxGetPr(mxGetField(prhs[0], 0, "N"));
+		L = (int)((int)*pd1 / WTdef.b0);
+		if (WTdef.b0 >= 1) L = (int)*pd1;
+	}
 	WTdef.MWL = L;
 
 	WTdef.convtype = GetIntegerFieldDefault (prhs[1], "convtype", 0);
@@ -242,15 +243,15 @@ void mexFunction(int nlhs, mxArray *plhs[],
 				DA2CA_nomem(wdec[m].d[s], mxGetCell(pm, s));
 		}
 		if (ReOut == 0) {
-            if (NULL == (xrec = (double complex *)mxMalloc(L*M*sizeof(double complex)) ))
+			if (NULL == (xrec = (double complex *)mxMalloc(L*M*sizeof(double complex)) ))
 				mexErrMsgTxt("xrec: Out of memory.");
-            pth_Ncomplex_1D_wavelet_rec(xrec, wdec, L, M, pWF);
+			pth_Ncomplex_1D_wavelet_rec(xrec, wdec, L, M, pWF);
 			CA2DA(plhs[0], xrec);
-            mxFree(xrec);
-        } else 
-            pth_NRe_complex_1D_wavelet_rec(mxGetPr(plhs[0]), wdec, L, M, pWF);
+			mxFree(xrec);
+		} else 
+			pth_NRe_complex_1D_wavelet_rec(mxGetPr(plhs[0]), wdec, L, M, pWF);
 
-  		DestroyComplexWaveletVarArray(wdec, M);
+		DestroyComplexWaveletVarArray(wdec, M);
 	}
 	
 	plhs[1] = export_WaveletFamilyArray(&pWF, 1, 1);
