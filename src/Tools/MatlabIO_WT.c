@@ -8,11 +8,11 @@
 mxArray *export_RealWaveletDec(double **d, unsigned int *N, unsigned int S) {
 	mxArray *pa, *pm;
 	unsigned int j;
-	int dims[2];
+	mwSize dims[2];
 
 	if (d==NULL || N==NULL) return NULL;
 	dims[0] = 1;
-	dims[1] = (int)S;
+	dims[1] = S;
 	pa = mxCreateCellArray(2, dims);
 	for (j=0; j<S; j++) {
 		pm = mxCreateDoubleMatrix(1, N[j], mxREAL);
@@ -25,13 +25,13 @@ mxArray *export_RealWaveletDec(double **d, unsigned int *N, unsigned int S) {
 mxArray *export_ComplexWaveletDec(double complex **d, unsigned int *N, unsigned int S) {
 	mxArray *pa, *pm;
 	unsigned int i, j;
-	int dims[2];
+	mwSize dims[2];
 	double *pr, *pi;
 	double complex *wc;
 
 	if (d==NULL || N==NULL) return NULL;
 	dims[0] = 1;
-	dims[1] = (int)S;
+	dims[1] = S;
 	pa = mxCreateCellArray(2, dims);
 	for (j=0; j<S; j++) {
 		pm = mxCreateDoubleMatrix(1, N[j], mxCOMPLEX);
@@ -39,15 +39,18 @@ mxArray *export_ComplexWaveletDec(double complex **d, unsigned int *N, unsigned 
 		pr = mxGetPr(pm);
 		pi = mxGetPi(pm);
 		wc = d[j];
-		for (i=0; i<N[j]; i++) pr[i] = creal(wc[i]);
-		for (i=0; i<N[j]; i++) pi[i] = cimag(wc[i]);
+		for (i=0; i<N[j]; i++) {
+			pr[i] = creal(wc[i]);
+			pi[i] = cimag(wc[i]);
+		}
 	}
 	return pa;
 }
 
 mxArray *export_RWT(t_RWTvar *x, int M, int N) {
 	const char *field_names[] = {"d", "N", "S"};
-	int m, i, S, dims[2];
+	int m, i, S;
+	mwSize dims[2];
 	mxArray *pa, *pm;
 	double *p;
 
@@ -72,7 +75,8 @@ mxArray *export_RWT(t_RWTvar *x, int M, int N) {
 
 mxArray *export_CWT(t_CWTvar *x, int M, int N) {
 	const char *field_names[] = {"d", "N", "S"};
-	int m, i, S, dims[2];
+	int m, i, S;
+	mwSize dims[2];
 	mxArray *pa, *pm;
 	double *p;
 
@@ -102,7 +106,8 @@ mxArray *export_WaveletFamily(t_WaveletFamily *pWF) {
 mxArray *export_WaveletFamilyArray(t_WaveletFamily **pWF, int M, int N) {
 	const char *field_names[] = {"format", "type", "convtype", "wave", "scale", "Ls", 
 								 "center", "Down_smp", "Ns", "Cpsi", "a0", "b0", "op1", "V"};
-	int m, i, Ns, dims[2];
+	int m, i, Ns;
+	mwSize dims[2];
 	mxArray *pa, *pm;
 	double *p;
 	
