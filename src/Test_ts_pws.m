@@ -7,7 +7,7 @@ Data.reference = s;
 tspws.rm = 1;
 tspws.wu = 2;
 tspws.unbiased = 1;
-tspws.Nmax = 10;
+% tspws.Nmax = 10;
 tspws.convergence = 1;
 
 out = gw_ts_pws(Data, tspws);

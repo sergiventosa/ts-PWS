@@ -12,7 +12,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
 				 int nrhs, const mxArray *prhs[])
 {
 	const char *field_names[] = {"LS", "tsPWS", "LS_sim", "tsPWS_sim", "LS_misfit", "tsPWS_misfit"};
-	t_tsPWS tsPWS = {-1, 0, 0, 4, 2., 1.0, PI*sqrt(2/log(2)), 2., 0., 0., 2., 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL};
+	t_tsPWS tsPWS = {-1, 0, 6, 4, 2., 1.0, PI*sqrt(2/log(2)), 2., 0., 0., 2., 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL};
 	t_tsPWS_out out = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0};
 	t_data      in;
 	mxArray *pm;
