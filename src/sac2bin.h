@@ -21,7 +21,7 @@ typedef struct {
 	float    stel2;     /* Elevetion of st. 2.       */
 	uint32_t nlags;     /* Number of lags.           */
 	uint32_t nseq;      /* Number of sequences.      */
-	uint32_t tlength;   /* Length of the corr. seq. (s) */
+	float    tlength;   /* Length of the corr. seq. (s) */
 	float    lag1;      /* Lowest lag time (s).      */
 	float    lag2;      /* Highest lag time (s).     */
 } t_ccheader;

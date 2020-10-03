@@ -41,7 +41,7 @@ void warning_diff (char *filename, char *nick) {
 
 int sac2bin_main (char *outfile, char *infiles) {
 	t_ccheader *hdr;
-	float *data=NULL, *trace=NULL;
+	float *data=NULL, *trace=NULL, *lag0=NULL;
 	float stlat1, stlon1, stlat2, stlon2;
 	float LAG1, LAG2, DT;
 	float lag1, lag2, dt;
@@ -75,8 +75,16 @@ int sac2bin_main (char *outfile, char *infiles) {
 	
 	filename = filenames[0];
 	rsach (filename, &nerr, strlen(filename));       if (nerr) return nerr_print (filename, nerr);
-	sac_warning_off ();  /* Avoids lots of warnings when fields like stdp & knetwk are undefined. */
-	getkhv ("kstnm",  hdr->method, &nerr, strlen("kstnm"), 8); if (nerr) strcpy(hdr->method, "");
+	sac_warning_off ();  /* Avoids lots of warnings when fields such as stdp or knetwk are undefined. */
+	getkhv ("kinst",  hdr->method, &nerr, strlen("kinst"),  8); if (nerr) strcpy(hdr->method, "");
+	getkhv ("kuser0", hdr->net1,   &nerr, strlen("kuser0"), 8); if (nerr) strcpy(hdr->net1, "");
+	getkhv ("kevnm",  hdr->sta1,   &nerr, strlen("kevnm"),  8); if (nerr) strcpy(hdr->sta1, "");
+	getkhv ("kuser1", hdr->loc1,   &nerr, strlen("kuser1"), 8); if (nerr) strcpy(hdr->loc1, "");
+	getkhv ("kuser2", hdr->chn1,   &nerr, strlen("kuser2"), 8); if (nerr) strcpy(hdr->chn1, "");
+	getkhv ("knetwk", hdr->net2,   &nerr, strlen("knetwk"), 8); if (nerr) strcpy(hdr->net2, "");
+	getkhv ("kstnm",  hdr->sta2,   &nerr, strlen("kstnm"),  8); if (nerr) strcpy(hdr->sta2, "");
+	getkhv ("khole",  hdr->loc2,   &nerr, strlen("khole"),  8); if (nerr) strcpy(hdr->loc2, "");
+	getkhv ("kcmpnm", hdr->chn2,   &nerr, strlen("kcmpnm"), 8); if (nerr) strcpy(hdr->chn2, "");
 	getfhv ("evla",  &hdr->stlat1, &nerr, strlen("evla"));  if (nerr) warning_missing_info (filename, "evla");
 	getfhv ("evlo",  &hdr->stlon1, &nerr, strlen("evlo"));  if (nerr) warning_missing_info (filename, "evlo");
 	getfhv ("stla",  &hdr->stlat2, &nerr, strlen("stla"));  if (nerr) warning_missing_info (filename, "stla");
@@ -86,6 +94,7 @@ int sac2bin_main (char *outfile, char *infiles) {
 	getfhv ("b",     &hdr->lag1,   &nerr, strlen("b"));     if (nerr) return nerr_print (filename, nerr);
 	hdr->nlags = (uint32_t)ia1;
 	hdr->lag2  = hdr->lag1 + DT*(ia1-1);
+	hdr->tlength = fabs(hdr->lag2 - hdr->lag1);
 	
 	/* Allocated memory */
 	NLAGS = hdr->nlags;
@@ -93,10 +102,12 @@ int sac2bin_main (char *outfile, char *infiles) {
 	LAG2  = hdr->lag2;
 
 	if (NULL == (time = (time_t *)calloc(mtr, sizeof(time_t)) )) nerr = 4;
+	if (NULL == (lag0 = (float *)calloc(mtr, sizeof(float)) )) nerr = 4;
 	if (NULL == (data = (float *)calloc(mtr*NLAGS, sizeof(float)) )) nerr = 4;
 	if (nerr == 4) {
 		free(hdr);
 		free(time);
+		free(lag0);
 		free(data);
 		printf ("\a sac2bin_main: Out of memory when reading %s (npts = %d)\n", filename, mtr*NLAGS); 
 		return 4; 
@@ -120,6 +131,7 @@ int sac2bin_main (char *outfile, char *infiles) {
 		getnhv ("nzmin",  &min,    &nerr, strlen("nzmin"));  if (nerr) skiptime = 1;
 		getnhv ("nzsec",  &sec,    &nerr, strlen("nzsec"));  if (nerr) skiptime = 1;
 		getnhv ("nzmsec", &msec,   &nerr, strlen("nzmsec")); if (nerr) skiptime = 1;
+		getfhv ("o",  &lag0[itr-nskip], &nerr, strlen("o")); if (nerr) lag0[itr-nskip] = 0;
 		getfhv ("evla",   &stlat1, &nerr, strlen("evla"));
 		if (nerr || stlat1 != hdr->stlat1) warning_diff (filename, "evla");
 		getfhv ("evlo",   &stlon1, &nerr, strlen("evlo"));
@@ -177,8 +189,14 @@ int sac2bin_main (char *outfile, char *infiles) {
 	
 	fwrite (hdr, sizeof(t_ccheader), 1, fid);
 	fwrite (time, sizeof(time_t), mtr, fid);
+	fwrite (lag0, sizeof(float), mtr, fid);
 	fwrite (data, sizeof(float), mtr*NLAGS, fid);
 	fclose (fid);
+	
+	free(hdr);
+	free(time);
+	free(lag0);
+	free(data);
 	
 	return 0;
 }
