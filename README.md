@@ -5,9 +5,9 @@ Time-scale phase-weighted stack
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 
 Software to compute the time-scale phase-weighted stack (ts-PWS), including the 
-two-stage stack and the unbiased phase coherence strategies ([Ventosa et al., GJI 2019](https://doi.org/10.1093/gji/ggx284)).
+two-stage stack and the unbiased phase coherence strategies ([Ventosa et al., GJI 2017](https://doi.org/10.1093/gji/ggx284)).
 
-The software packages of [Fast phase cross-correlation](https://github.com/sergiventosa/FastPCC) 
+The software packages of [fast phase cross-correlation](https://github.com/sergiventosa/FastPCC) 
 and ts-PWS stacking are basic building blocks in the design of efficient 
 signal extraction methods from interstation correlations.
 
