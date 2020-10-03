@@ -19,7 +19,7 @@
 /********************************************************************************/
 int real_1D_wavelet_dec (t_RWTvar *y, double *x, unsigned int N, t_WaveletFamily *pWF) {
 	unsigned int s, L;
-	int er=0;
+	int er = 0;
 
 	if (x == NULL) {
 		prerror("real_1D_wavelet_dec: data null pointer.");
@@ -31,7 +31,8 @@ int real_1D_wavelet_dec (t_RWTvar *y, double *x, unsigned int N, t_WaveletFamily
 		L = pWF->Ls[s];
 		if (N < L) {
 			prerror("real_1D_wavelet_dec: scale = %d, Ls = %d > N = %d", s, pWF->Ls[s], N);
-			er = -3; continue;
+			er = -3; 
+			continue;
 		}
 		cdotx_dd(y->d[s], x, N, pWF->wframe.wr[s], L, pWF->center[s], pWF->Down_smp[s]);
 		y->N[s] = (N + pWF->Down_smp[s] - 1)/pWF->Down_smp[s];
@@ -41,19 +42,20 @@ int real_1D_wavelet_dec (t_RWTvar *y, double *x, unsigned int N, t_WaveletFamily
 
 int complex_1D_wavelet_dec (t_CWTvar *y, double *x, unsigned int N, t_WaveletFamily *pWF) {
 	unsigned int s, L;
-	int er=0;
+	int er = 0;
 
 	if (x == NULL) {
 		prerror("complex_1D_wavelet_dec: data null pointer.");
 		return -1;
 	}
-    y->S = pWF->Ns;
-    #pragma omp parallel for default(shared) private(L) schedule(dynamic,1)
+	y->S = pWF->Ns;
+	// #pragma omp parallel for default(shared) private(L) schedule(dynamic,1)
 	for (s=0; s<pWF->Ns; s++) {
 		L = pWF->Ls[s];
 		if (N < L) {
 			prerror("complex_1D_wavelet_dec: scale = %d, Ls = %d > N = %d", s, pWF->Ls[s], N);
-			er = -3; continue;
+			er = -3; 
+			continue;
 		}
 		cdotx_dc(y->d[s], x, N, pWF->wframe.wc[s], L, pWF->center[s], pWF->Down_smp[s]);
 		y->N[s] = (N + pWF->Down_smp[s] - 1)/pWF->Down_smp[s];
@@ -83,7 +85,7 @@ int real_1D_wavelet_rec (double *xrec, t_RWTvar *y, unsigned int N, t_WaveletFam
 			cdotx_upsampling_dd(bf, N, y->d[s], y->N[s], pWF->wdualframe.wr[s], pWF->Lds[s], pWF->center_df[s], pWF->Down_smp[s]);
 		else 
 			cdotx_dd(bf, y->d[s], N, pWF->wdualframe.wr[s], pWF->Lds[s], pWF->center_df[s], 1);
-		aux = (4 * log(pWF->a0)) / (pWF->Cpsi * pWF->V * pWF->scale[s]);
+		aux = log(pWF->a0) / (pWF->Cpsi * pWF->V * pWF->scale[s]);
 		for (u=0; u<N; u++) p[u] += aux * bf[u];
 	}
 	myfree(bf0);
@@ -112,7 +114,7 @@ int complex_1D_wavelet_rec (double complex *xrec, t_CWTvar *y, unsigned int N, t
 			cdotx_upsampling_cc(bf, N, y->d[s], y->N[s], pWF->wdualframe.wc[s], pWF->Lds[s], pWF->center_df[s], pWF->Down_smp[s]);
 		else
 			cdotx_cc(bf, y->d[s], N, pWF->wdualframe.wc[s], pWF->Lds[s], pWF->center_df[s], 1);
-		aux = (2 * log(pWF->a0)) / (pWF->Cpsi * pWF->V * pWF->scale[s]);
+		aux = log(pWF->a0) / (2 * pWF->Cpsi * pWF->V * pWF->scale[s]);
 		for (u=0; u<N; u++)	p[u] += aux * bf[u];
 	}
 	myfree(bf0);
@@ -140,7 +142,7 @@ int Re_complex_1D_wavelet_rec (double *xrec, t_CWTvar *y, unsigned int N, t_Wave
 			re_cdotx_upsampling_cc(bf, N, y->d[s], y->N[s], pWF->wdualframe.wc[s], pWF->Lds[s], pWF->center_df[s], pWF->Down_smp[s]);
 		else
 			re_cdotx_cc(bf, y->d[s], N, pWF->wdualframe.wc[s], pWF->Lds[s], pWF->center_df[s], 1);
-		aux = (2 * log(pWF->a0)) / (pWF->Cpsi * pWF->V * pWF->scale[s]);
+		aux = log(pWF->a0) / (2 * pWF->Cpsi * pWF->V * pWF->scale[s]);
 		for (u=0; u<N; u++) p[u] += aux * bf[u];
 	}
 	myfree(bf0);
@@ -241,3 +243,4 @@ int NRe_complex_1D_wavelet_rec(double *xrec, t_CWTvar *y, unsigned int N, unsign
 	}
     return er;
 }
+

@@ -3,6 +3,7 @@
  * - Wavelet function definitions.
  * 2011/01 Sergi Ventosa
  * 2016/01 Sergi Ventosa: migrated to c99 double complex types.
+ * 2018/04 Sergi Ventosa: Change normalization of MexHat, Cpsi & IFWT to be close to the most commontly definitions.
  */
 #include <math.h>
 #include <stdlib.h>
@@ -89,7 +90,7 @@ void MexicanHatFun_real (double *w, int *center, double dump, unsigned int Ls, d
 	double k, daux;
 	int u, u0;
 
-	k = sqrt(2/(3*sqrt(PI)*scale));
+	k = 2/sqrt(3*sqrt(PI)*scale);
 	*center = Ls/2;
 	scale = 1/scale;
 	u0 = Ls/2;
@@ -119,7 +120,7 @@ void MexicanHatFun (double complex *w, int *center, double dump, unsigned int Ls
 	double k, daux;
 	int u, u0;
 
-	k = sqrt(2/(3*sqrt(PI)*scale));
+	k = 2/sqrt(3*sqrt(PI)*scale);
 	*center = Ls/2;
 	scale = 1/scale;
 	u0 = Ls/2;
@@ -137,13 +138,13 @@ double Morlet_Cpsi (double w0) {
 		aux *= aux;
 		Cpsi += exp(-aux)/w;
 	}
-	Cpsi *= 0.01*(2*sqrt(PI));
+	Cpsi *= 0.01*sqrt(PI)/2;
 
 	return (Cpsi);
 }	
 
 double MexicanHat_Cpsi () {
-	return ( (8. / 3.) * sqrt(PI));
+	return ( (4. / 3.) * sqrt(PI));
 }
 
 
@@ -283,7 +284,7 @@ t_WaveletFamily *CreateWaveletFamily (int type, unsigned int Ns, unsigned int V,
 	case -1: 
 	case  1:
 	case  2: pWF->Cpsi = Morlet_Cpsi (op1);
-			 break;
+	         break;
 	case -3:
 	case  3: pWF->Cpsi = MexicanHat_Cpsi ();
 	         break;
@@ -313,7 +314,7 @@ unsigned int setwaveletlength0 (unsigned int *Ls, double *ps, unsigned int S, un
 	
 	Nsmpl = 0;
 	for (s=0; s<S; s++) {
-		ua1 = 2*(unsigned int)ceil(NSIGMAS*ps[s]);
+		ua1 = 2*(unsigned int)ceil(NSIGMAS*ps[s]) + 1;
 		Ls[s] = (ua1>MaxL) ? MaxL : ua1;
 		Nsmpl += ua1;
 	}

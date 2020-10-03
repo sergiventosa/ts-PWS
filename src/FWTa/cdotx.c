@@ -2,7 +2,7 @@
 #include "stdio.h"
 
 void cdotx_dd (double *y, double *x0, unsigned int N, double *w0, unsigned int L, int c, int inc) {
-	double *x, *w, aux1, aux2;
+	double *x, *w, aux;
 	unsigned int l, l0, n, n0;
 
 	if (N<L) {
@@ -16,22 +16,19 @@ void cdotx_dd (double *y, double *x0, unsigned int N, double *w0, unsigned int L
 
 		x = x0 + n0;
 		w = w0;
-		aux1 = 0;
-		aux2 = 0;
+		aux = 0;
 		for (l=0; l<l0>>1; l++) {
-			aux1 += w[0]*x[0];
-			aux2 += w[1]*x[1];
+			aux += w[0]*x[0] + w[1]*x[1];
 			w+=2; x+=2;
 		}
-		if (l0&1) aux1 += *w++*x[0];
+		if (l0&1) aux += *w++*x[0];
 		x = x0;
 		for (l=0; l<(L-l0)>>1; l++) {
-			aux1 += w[0]*x[0];
-			aux2 += w[1]*x[1];
+			aux += w[0]*x[0] + w[1]*x[1];
 			w+=2; x+=2;
 		}
-		if ((L-l0)&1) aux1 += w[0]*x[0];
-		*y++ = aux1 + aux2;
+		if ((L-l0)&1) aux += w[0]*x[0];
+		*y++ = aux;
 	}
 }
 
@@ -134,11 +131,11 @@ void cdotx_cc (double complex *y, double complex *x0, unsigned int N, double com
 		for (l=0; l<l0; l++) aux += conj(*w++) * *x++;
 		x = x0;
 		for (    ; l<L; l++) aux += conj(*w++) * *x++;
-		y[n] = aux;
+		*y++ = aux;
 	}
 }
 
-
+#if 0
 void re_cdotx_cc (double *y, double complex *x0, unsigned int N, double complex *w0, unsigned int L, int c, int inc) {
 	double complex *x, *w;
 	double aux;
@@ -175,6 +172,44 @@ void re_cdotx_cc (double *y, double complex *x0, unsigned int N, double complex 
 		*y++ = aux;
 	}
 }
+#else
+void re_cdotx_cc (double *y, double complex *x0, unsigned int N, double complex *w0, unsigned int L, int c, int inc) {
+	double *x, *w;
+	double aux;
+	unsigned int l, l0, n;
+	int n0;
+
+	if (N<L) {
+		x = (double *)x0; x0 = (double complex *)w0; w0 = (double complex *)x;
+		l = N; N = L; L = l;
+	}
+	for (n=0; n<N; n+=inc) {
+		n0 = (N + n -c) % N;
+		l0 = N - n0;
+		if (L < l0) l0 = L;
+
+		x = (double *)(x0 + n0);
+		w = (double *)w0;
+		aux = 0;
+		for (l=0; l<l0>>1; l++) {
+			aux += w[0]*x[0] + w[1]*x[1] + w[2]*x[2] + w[3]*x[3];
+			w+=4; x+=4;
+		}
+		if (l0&1) {
+			aux += w[0]*x[0] + w[1]*x[1];
+			w+=2;
+		}
+		x = (double *)x0;
+		for (l=0; l<(L-l0)>>1; l++) {
+			aux += w[0]*x[0] + w[1]*x[1] + w[2]*x[2] + w[3]*x[3];
+			w+=4; x+=4;
+		}
+		if ((L-l0)&1)
+			aux += w[0]*x[0] + w[1]*x[1];
+		*y++ = aux;
+	}
+}
+#endif
 
 void cdotx_upsampling_dd (double *y, unsigned int N, double *x0, unsigned int SX, double *w, unsigned int L, int c, int D) {
 	/* SX is not used */
@@ -187,14 +222,16 @@ void cdotx_upsampling_dd (double *y, unsigned int N, double *x0, unsigned int SX
 	for (n=0; n<N; n++) {
 		n0 = (N + n -c) % N;
 		l0 = N - n0;
-		if (L < l0) l0 = L;
 
-		ad = 0.;
+		ad = 0;
 		x = x0 + (n0+D-1)/D;
-		for (l=(ai-n0)%D; l<l0; l+=D) ad += *(w+l)**x++;
-
-		x = x0;
-		for (l=l0; l<L; l+=D) ad += *(w+l)**x++;
+		if (L < l0)
+			for (l=(ai-n0)%D; l<L; l+=D) ad += w[l] * *x++;
+		else {
+			for (l=(ai-n0)%D; l<l0; l+=D) ad += w[l] * *x++;
+			x = x0;
+			for (l=l0; l<L; l+=D) ad += w[l] * *x++;
+		}
 		y[n] = D * ad;
 	}
 }
@@ -273,7 +310,6 @@ void re_cdotx_upsampling_cc (double *y, const unsigned int N, double complex *x0
 	
 	ai = (N/D + D)*D; /* Just a number bigger than N with no reminder. */
 	
-	/* #pragma omp parallel for default(shared) private(ad, n0, l0, l, x) schedule(static) */
 	for (n=0; n<N; n++) {
 		n0 = (N + n - c) % N;
 		l0 = N - n0;
