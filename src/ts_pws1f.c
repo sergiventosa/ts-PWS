@@ -60,6 +60,7 @@
 /* **** 2020 ****                                                            */
 /* Sep16 (1f) Modified the format of the input binary file (msacs) to save   */
 /*            the actual "zero" lag time for each correlation pair.          */
+/* Abr14 (1f) Minor update to compile with SAC v102.0.                       */
 /*****************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
@@ -282,7 +283,7 @@ int main(int argc, char *argv[]) {
 		filename = tspws.fileconv;
 		rsach (filename, &er, strlen(filename));
 		if (!er) {
-			sac_warning_off ();
+			// sac_warning_off (); // Not supported from v102.0
 			getnhv ("npts",  &hdr2.max,  &er, strlen("npts"));
 		}
 		if (!er) {
@@ -437,7 +438,7 @@ void infooo() {
 	puts("Ventosa et al., 2008. S-transform from a wavelets point of view, IEEE Transactions on Signal Processing, 56, 2771-2780, doi:10.1109/TSP.2008.917029");
 	puts("Ventosa, S., Schimmel, M., & E. Stutzmann, 2017. Extracting surface waves, hum and normal modes: Time-scale phase-weighted stack and beyond, Geophysical Journal International, 211(1), 30-44, doi:10.1093/gji/ggx284"); 
 	puts("AUTHOR: Sergi Ventosa Rahuet (sergiventosa(at)hotmail.com)");
-	puts("Last modification: 01/10/2020\n");
+	puts("Last modification: 14/04/2021\n");
 }
 
 void usage() {
@@ -509,8 +510,8 @@ void usage() {
 	puts("     Linear stack: tl.sac");
 	puts("     ts-PWS:       ts_pws.sac"); 
 	puts("");
-	puts("AUTHOR: Sergi Ventosa, 01/10/2020");
-	puts("Version 1.0.2");
+	puts("AUTHOR: Sergi Ventosa, 14/04/2021");
+	puts("Version 1.0.3");
 	puts("");
 	puts("EXAMPLES");
 	puts("  1) Minimal: Stack of the traces listed in filelist.txt using the time-scale PWS method");
@@ -614,7 +615,7 @@ int ReadData (float **sigall, time_t **time, float **lag0, t_hdr *hdr, char *fil
 			/* Read the header of the first file. */
 			filename = filenames[0];
 			rsach (filename, &nerr, strlen(filename));            if (nerr) error_header (filename, nerr);
-			sac_warning_off ();  /* Avoids lots of warnings when fields like stdp & knetwk are undefined. */
+			// sac_warning_off (); /* Not supported from v102.0, avoids lots of warnings when fields like stdp & knetwk are undefined. */
 			getnhv ("npts",   &hdr->max,  &nerr, strlen("npts"));  if (nerr) return error_missing_info (filename, "npts", nerr);
 			getfhv ("stla",   &hdr->stla, &nerr, strlen("stla"));  if (nerr) warning_missing_info (filename, "stla", verbose);
 			getfhv ("stlo",   &hdr->stlo, &nerr, strlen("stlo"));  if (nerr) warning_missing_info (filename, "stlo", verbose);

@@ -75,7 +75,8 @@ int sac2bin_main (char *outfile, char *infiles) {
 	
 	filename = filenames[0];
 	rsach (filename, &nerr, strlen(filename));       if (nerr) return nerr_print (filename, nerr);
-	sac_warning_off ();  /* Avoids lots of warnings when fields such as stdp or knetwk are undefined. */
+	// Not supported from v102.0
+	// sac_warning_off ();  /* Avoids lots of warnings when fields such as stdp or knetwk are undefined. */
 	getkhv ("kinst",  hdr->method, &nerr, strlen("kinst"),  8); if (nerr) strcpy(hdr->method, "");
 	getkhv ("kuser0", hdr->net1,   &nerr, strlen("kuser0"), 8); if (nerr) strcpy(hdr->net1, "");
 	getkhv ("kevnm",  hdr->sta1,   &nerr, strlen("kevnm"),  8); if (nerr) strcpy(hdr->sta1, "");
@@ -122,7 +123,8 @@ int sac2bin_main (char *outfile, char *infiles) {
 		trace = data + (itr-nskip)*NLAGS;
 		filename = filenames[itr];
 		rsac1(filename, trace, &nlags, &lag1, &dt, &NLAGS, &nerr, strlen(filename));
-		sac_warning_off ();
+		// Not supported from v102.0
+		// sac_warning_off ();
 		lag2 = lag1 + DT*nlags;
 		if (nerr) return nerr_print (filename, nerr);
 		getnhv ("nzyear", &year,   &nerr, strlen("nzyear")); if (nerr) skiptime = 1;
