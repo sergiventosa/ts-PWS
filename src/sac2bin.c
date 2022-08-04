@@ -125,14 +125,14 @@ int sac2bin_main (char *outfile, char *infiles) {
 		rsac1(filename, trace, &nlags, &lag1, &dt, &NLAGS, &nerr, strlen(filename));
 		// Not supported from v102.0
 		// sac_warning_off ();
-		lag2 = lag1 + DT*nlags;
+		lag2 = lag1 + DT*(nlags-1);
 		if (nerr) return nerr_print (filename, nerr);
 		getnhv ("nzyear", &year,   &nerr, strlen("nzyear")); if (nerr) skiptime = 1;
 		getnhv ("nzjday", &yday,   &nerr, strlen("nzjday")); if (nerr) skiptime = 1;
 		getnhv ("nzhour", &hour,   &nerr, strlen("nzhour")); if (nerr) skiptime = 1;
 		getnhv ("nzmin",  &min,    &nerr, strlen("nzmin"));  if (nerr) skiptime = 1;
 		getnhv ("nzsec",  &sec,    &nerr, strlen("nzsec"));  if (nerr) skiptime = 1;
-		getnhv ("nzmsec", &msec,   &nerr, strlen("nzmsec")); if (nerr) skiptime = 1;
+		getnhv ("nzmsec", &msec,   &nerr, strlen("nzmsec")); if (nerr) skiptime = 1; 
 		getfhv ("o",  &lag0[itr-nskip], &nerr, strlen("o")); if (nerr) lag0[itr-nskip] = 0;
 		getfhv ("evla",   &stlat1, &nerr, strlen("evla"));
 		if (nerr || stlat1 != hdr->stlat1) warning_diff (filename, "evla");
@@ -178,7 +178,7 @@ int sac2bin_main (char *outfile, char *infiles) {
 		}
 	}
 	mtr = itr - nskip;
-	hdr->nseq = mtr;
+	hdr->nseq = mtr; 
 	DestroyFilelist(filenames);
 
 	/*******************************/
