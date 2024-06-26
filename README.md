@@ -36,18 +36,28 @@ any previouly compiled code.
  * OpenMP is used to speed up computations. When OpenMP is not available, use 
    make -f makefile_NoOpenMP".
 
+Compile SAC
+-----------
+The precompiled sac libraries may not work in some systems/compilers. If you use the gcc 
+compiler on, e.g., Ubuntu you may have errors similar to:
+>  /usr/bin/ld: /opt/sac/lib/sacio.a(getfhv.o): relocation R_X86_64_32 against undefined symbol 'kmlhf' can not be used when making a PIE object; recompile with -fPIC
+
+This can be solved by compiling the source version of SAC. From the source directory of sac do:
+>  ./configure --enable-optim=2 --prefix=/opt/sac CFLAGS='-march=native -fPIC' \
+>  make \
+>  make install
+
+The key detail here is the -fPIC flag, you can adapt the other options to your needs.
+The flag --prefix=/opt/sac sets the directory where sac will be installed when doing 
+"make install". You can change this directory, e.g., to keep using your current 
+version of SAC for other purposes.
+
 Warming up
 ----------
  1. Read ./examples/example.sh
  2. Execute it, e.g., bash example.sh
  3. Do ts-pws for the parameters usage.
  
-Paper to be cited
------------------
-Ventosa S., Schimmel M. & E. Stutzmann, 2017. Extracting surface waves, hum and 
-normal modes: Time-scale phase-weighted stack and beyond, Geophysical Journal 
-International, 211(1), 30-44, doi: [10.1093/gji/ggx284](https://doi.org/10.1093/gji/ggx284)
-
 Origin of PWS
 -------------
 Schimmel M. & J. Gallart, 2007. Frequency-dependent phase coherence for noise 
@@ -58,4 +68,10 @@ Schimmel M. & H. Paulssen, 1997. Noise reduction and detection of weak, coherent
 signals through phase weighted stacks, Geophysical Journal International, 130, 
 497-505, doi: [10.1111/j.1365-246X.1997.tb05664.x](https://doi.org/10.1111/j.1365-246X.1997.tb05664.x)
 
-2020/10/01 Sergi Ventosa Rahuet (sergiventosa(at)hotmail.com)
+Paper to be cited
+-----------------
+Ventosa S., Schimmel M. & E. Stutzmann, 2017. Extracting surface waves, hum and 
+normal modes: Time-scale phase-weighted stack and beyond, Geophysical Journal 
+International, 211(1), 30-44, doi: [10.1093/gji/ggx284](https://doi.org/10.1093/gji/ggx284)
+
+2024/06/26 Sergi Ventosa Rahuet (sergiventosa(at)hotmail.com)
