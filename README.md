@@ -28,7 +28,7 @@ Compilation
 To compile execute "make" in the src directory. Use "make clean" to remove 
 any previouly compiled code.
 
- * The Seismic Analysis Code (SAC) is used to read and write sac files.
+ * The [Seismic Analysis Code](http://ds.iris.edu/ds/nodes/dmc/software/downloads/sac/) (SAC) is used to read and write sac files.
  * The SACHOME enviorment variable should provide the path to directory where sac is
    installed. For example, in bash this can be defined as:  
    export SACHOME=/opt/sac  
